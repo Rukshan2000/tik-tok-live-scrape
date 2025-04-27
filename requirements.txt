@@ -1,5 +1,5 @@
 Flask==2.3.3
-TikTokLive==0.0.15
+TikTokLive==6.4.5
 asyncio
 werkzeug
 gunicorn==23.0.0
