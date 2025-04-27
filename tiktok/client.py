@@ -37,13 +37,12 @@ def initialize_client(username):
     async def on_join(event):
         handle_join(event)
     
-    # Start the client in a new event loop
+    # Start the client
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        client.run()
+        asyncio.run(client.run())  # This will run the client in the current event loop
     except Exception as e:
         print(f"Error running client for {username}: {e}")
+
 
 def run_tiktok_client():
     """Run the TikTok client if a username is set."""
