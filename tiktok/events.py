@@ -4,29 +4,6 @@ from tiktok.data import comments, recent_gifts, gifter_coins, gifter_avatars, da
 
 async def handle_comment(event, client):
     try:
-        user = getattr(event, 'user', None)
-        if not user:
-            print("No user in comment event")
-            return
-        
-        nickname = getattr(user, 'nick_name', None) or getattr(user, 'nickname', 'Unknown')
-        
-        avatar_base64 = await get_avatar_base64(user, client)
-        
-        with data_lock:
-            comment_data = {
-                "user": nickname,
-                "text": event.comment,
-                "time": datetime.now().strftime("%H:%M:%S"),
-                "avatar": avatar_base64
-            }
-            comments.append(comment_data)
-            if len(comments) > 100:
-                comments.pop(0)
-        print(f"{nickname} -> {event.comment}")
-    except Exception as e:
-        print(f"Error processing comment: {e}")
-    try:
         avatar_base64 = await get_avatar_base64(event.user, client)
         with data_lock:
             comment_data = {
@@ -76,13 +53,4 @@ async def handle_gift(event, client):
         print(f"Error processing gift: {e}")
 
 def handle_join(event):
-    try:
-        user = getattr(event, 'user', None)
-        if not user:
-            print("No user in join event")
-            return
-        
-        nickname = getattr(user, 'nick_name', None) or getattr(user, 'nickname', 'Unknown')
-        print(f"{nickname} joined the stream!")
-    except Exception as e:
-        print(f"Error processing join: {e}")
+    print(f"{event.user.nickname} joined the stream!")
