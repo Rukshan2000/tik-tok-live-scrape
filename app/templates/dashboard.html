@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Live Dashboard</title>
+    <!-- Removed <meta http-equiv="refresh" content="3"> -->
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #f0f0f0;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            grid-template-rows: auto;
+            grid-template-areas:
+                "header header"
+                "controls controls"
+                "mvp main-content";
+            gap: 20px;
+            max-width: 1440px;
+        }
+
+        /* Background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        header {
+            grid-area: header;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ff3030;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+            font-weight: 800;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ff3030;
+        }
+
+        /* Improved dashboard controls styling */
+        .dashboard-controls {
+            grid-area: controls;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ff3030;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.2);
+        }
+
+        .dashboard-help {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .dashboard-help h3 {
+            margin-bottom: 5px;
+            color: #ff3030;
+        }
+
+        .username-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .username-form input[type="text"] {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 15px;
+            border-radius: 5px;
+            border: 2px solid #333;
+            background-color: #222;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .username-form input[type="text"]:focus {
+            border-color: #ff3030;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 48, 48, 0.3);
+        }
+
+        .username-form button,
+        .reset-button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #ff3030, #ff0000);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .username-form button:hover,
+        .reset-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+        }
+
+        .reset-button {
+            background: linear-gradient(135deg, #444, #333);
+        }
+
+        .form-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        #status-message {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status-connected {
+            background-color: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+        }
+
+        .status-connecting {
+            background-color: rgba(255, 255, 0, 0.2);
+            color: #ffff00;
+        }
+
+        .status-error {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #ff3030;
+        }
+
+        .section-title {
+            color: #ff3030;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            margin-left: 10px;
+            background: linear-gradient(to right, #ff3030, transparent);
+        }
+
+        /* Main content area with grid */
+        .main-content {
+            grid-area: main-content;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+        }
+
+        /* MVP styles - Now in sidebar */
+        .mvp-sidebar {
+            grid-area: mvp;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ff3030;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.2);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .mvp-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        .mvp-avatar-container {
+            position: relative;
+            margin-bottom: 20px;
+            width: 150px;
+            height: 150px;
+        }
+
+        .mvp-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #ff3030;
+            position: relative;
+            z-index: 2;
+        }
+
+        .mvp-avatar::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff3030, #ff9000, #ff3030);
+            z-index: -1;
+            animation: rotate-hue 3s linear infinite;
+        }
+
+        .mvp-label {
+            font-size: 1rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .mvp-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff3030;
+            margin-bottom: 5px;
+        }
+
+        .mvp-coins {
+            font-size: 1.4rem;
+            color: #f0f0f0;
+            font-weight: 600;
+        }
+
+        /* MVP Animation */
+        @keyframes pulse-mvp {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 48, 48, 0.7);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 30px 15px rgba(255, 48, 48, 0.5);
+                transform: scale(1.05);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 48, 48, 0);
+                transform: scale(1);
+            }
+        }
+
+        @keyframes rotate-hue {
+            0% {
+                filter: hue-rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                filter: hue-rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        .mvp-avatar-aura {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: transparent;
+            border: 3px solid transparent;
+            z-index: 1;
+        }
+
+        .aura-inner {
+            animation: pulse-mvp 2s infinite;
+        }
+
+        .aura-outer {
+            animation: pulse-mvp 2s infinite 1s;
+        }
+
+        /* Top gifters styles - Now in grid */
+        .gifters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background-color: #1f1f1f;
+            border-radius: 10px;
+            border-left: 5px solid #ff3030;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .gifter-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s ease;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #2a2a2a;
+        }
+
+        .gifter-card:hover {
+            transform: translateY(-5px);
+            background-color: #333;
+        }
+
+        .gifter-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #ff3030;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+        }
+
+        .gifter-name {
+            font-weight: 600;
+            margin-top: 10px;
+            text-align: center;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .gifter-coins {
+            color: #ff3030;
+            font-weight: bold;
+        }
+
+        /* Recent gifts and comments in grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .gifts-container, .comments-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #ff3030 #1f1f1f;
+            padding-right: 5px;
+        }
+
+        .gifts-container::-webkit-scrollbar, 
+        .comments-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .gifts-container::-webkit-scrollbar-track, 
+        .comments-container::-webkit-scrollbar-track {
+            background: #1f1f1f;
+        }
+
+        .gifts-container::-webkit-scrollbar-thumb, 
+        .comments-container::-webkit-scrollbar-thumb {
+            background-color: #ff3030;
+            border-radius: 20px;
+        }
+
+        .gift-card, .comment-card {
+            display: flex;
+            align-items: center;
+            background-color: #1f1f1f;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #ff3030;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .gift-card:hover, .comment-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(255, 0, 0, 0.2);
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 20px;
+            object-fit: cover;
+            border: 2px solid #ff3030;
+        }
+
+        .gift-content, .comment-content {
+            flex: 1;
+        }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #ff3030;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        .gift-text {
+            color: #ddd;
+        }
+
+        /* Empty state styling */
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #888;
+            font-style: italic;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        /* Animation classes based on gift value */
+        .animation-1000 {
+            animation: pulse 1.5s infinite;
+        }
+
+        .animation-2000 {
+            animation: pulse-gold 1.5s infinite;
+            border-color: gold !important;
+        }
+
+        .animation-5000 {
+            animation: pulse-diamond 1.5s infinite;
+            border-color: deepskyblue !important;
+        }
+
+        .animation-10000 {
+            animation: pulse-legendary 1.5s infinite;
+            border-color: magenta !important;
+        }
+
+        .animation-20000 {
+            animation: pulse-godlike 1.5s infinite;
+            border-color: yellow !important;
+            border-width: 3px !important;
+        }
+
+        /* Gift animations */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 48, 48, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 48, 48, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 48, 48, 0); }
+        }
+
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+
+        @keyframes pulse-diamond {
+            0% { box-shadow: 0 0 0 0 rgba(0, 191, 255, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(0, 191, 255, 0.5); }
+            100% { box-shadow: 0 0 0 30px rgba(0, 191, 255, 0); }
+        }
+
+        @keyframes pulse-legendary {
+            0% { 
+                box-shadow: 0 0 10px 0 rgba(255, 0, 255, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px 10px rgba(255, 0, 255, 0.5);
+                transform: scale(1.05);
+            }
+            100% { 
+                box-shadow: 0 0 30px 20px rgba(255, 0, 255, 0);
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse-godlike {
+            0% { 
+                box-shadow: 0 0 10px 0 rgba(255, 255, 0, 0.7),
+                           0 0 20px 0 rgba(255, 0, 0, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 30px 15px rgba(255, 255, 0, 0.5),
+                           0 0 40px 20px rgba(255, 0, 0, 0.5);
+                transform: scale(1.1);
+            }
+            100% { 
+                box-shadow: 0 0 50px 30px rgba(255, 255, 0, 0),
+                           0 0 60px 40px rgba(255, 0, 0, 0);
+                transform: scale(1);
+            }
+        }
+
+        /* Add loading indicator */
+        .loading-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 48, 48, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #ff3030;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Media queries for responsiveness - improved */
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "controls"
+                    "mvp"
+                    "main-content";
+                padding: 15px;
+            }
+            
+            .mvp-sidebar {
+                position: static;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mvp-avatar-container {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .mvp-avatar {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .mvp-avatar-aura {
+                width: 150px;
+                height: 150px;
+                top: -15px;
+                left: -15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .dashboard-controls {
+                padding: 15px;
+            }
+            
+            .gifters-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .gift-card, .comment-card {
+                padding: 12px;
+            }
+            
+            .user-avatar {
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 15px;
+            }
+            
+            .dashboard-controls {
+                padding: 12px;
+            }
+            
+            .username-form input[type="text"] {
+                padding: 10px;
+                min-width: 0;
+                width: 100%;
+            }
+            
+            .username-form button,
+            .reset-button {
+                padding: 10px 15px;
+                width: 100%;
+            }
+            
+            .mvp-avatar-container {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .mvp-avatar {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .mvp-avatar-aura {
+                width: 130px;
+                height: 130px;
+                top: -15px;
+                left: -15px;
+            }
+            
+            .gifters-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .gifter-avatar {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .gift-card, .comment-card {
+                padding: 10px;
+            }
+            
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+                margin-right: 8px;
+            }
+            
+            .section-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TikTok Live Dashboard</h1>
+    </header>
+
+    <div class="dashboard-controls">
+        <div class="dashboard-help">
+            <h3>Getting Started</h3>
+            <p>Enter a TikTok username (including the @ symbol) to track their live stream gifts and comments.</p>
+        </div>
+        
+        <form id="username-form" class="username-form" method="POST" action="{{ url_for('main.display_dashboard') }}">
+            <input type="text" name="username" placeholder="Enter TikTok username (e.g., @username)" value="{{ username if username != 'Not set' else '' }}" required>
+            <div class="form-controls">
+                <button type="submit">Connect to Stream</button>
+                <button type="button" class="reset-button" id="reset-button">Reset Dashboard</button>
+            </div>
+        </form>
+        
+        <div id="status-message" class="status-connecting">
+            {% if username != 'Not set' %}
+                Connected to: @{{ username }}
+            {% else %}
+                Enter a username to connect
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mvp-sidebar">
+        <div class="section-title">Current MVP</div>
+        {% if mvp %}
+        <div class="mvp-container">
+            <div class="mvp-avatar-container">
+                <div class="mvp-avatar-aura aura-outer"></div>
+                <div class="mvp-avatar-aura aura-inner"></div>
+                <img class="mvp-avatar {{ mvp.animation_class }}" src="{{ mvp.avatar }}" alt="{{ mvp.name }}">
+            </div>
+            <div class="mvp-info">
+                <div class="mvp-name">{{ mvp.name }}</div>
+                <div class="mvp-coins">{{ mvp.coins }} coins</div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">No MVP yet. Gifts will appear here during the live stream.</div>
+        {% endif %}
+    </div>
+
+    <div class="main-content">
+        <div>
+            <div class="section-title">Top Gifters</div>
+            <div class="gifters-grid">
+                {% if top_gifters %}
+                    {% for gifter in top_gifters %}
+                    <div class="gifter-card">
+                        <img class="gifter-avatar {{ gifter.animation_class }}" src="{{ gifter.avatar }}" alt="{{ gifter.name }}">
+                        <div class="gifter-name">{{ gifter.name }}</div>
+                        <div class="gifter-coins">{{ gifter.coins }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">No gifters yet. They will appear here during the live stream.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div>
+                <div class="section-title">Recent Gifts</div>
+                <div class="gifts-container">
+                    {% if recent_gifts %}
+                        {% for gift in recent_gifts %}
+                        <div class="gift-card">
+                            <img class="user-avatar {{ gift.animation_class }}" src="{{ gift.avatar }}" alt="{{ gift.user }}">
+                            <div class="gift-content">
+                                <div class="user-header">
+                                    <span class="user-name">{{ gift.user }}</span>
+                                    <span class="timestamp">{{ gift.time }}</span>
+                                </div>
+                                <div class="gift-text">Sent {{ gift.count }}x "{{ gift.name }}" ({{ gift.coins }} coins)</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">No gifts yet. They will appear here during the live stream.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">Live Comments</div>
+                <div id="comments" class="comments-container">
+                    {% if comments %}
+                        {% for comment in comments %}
+                        <div class="comment-card">
+                            <img class="user-avatar" src="{{ comment.avatar }}" alt="{{ comment.user }}">
+                            <div class="comment-content">
+                                <div class="user-header">
+                                    <span class="user-name">{{ comment.user }}</span>
+                                    <span class="timestamp">{{ comment.time }}</span>
+                                </div>
+                                <div class="gift-text">{{ comment.text }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">No comments yet. They will appear here during the live stream.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const usernameForm = document.getElementById('username-form');
+        const resetButton = document.getElementById('reset-button');
+        const statusMessage = document.getElementById('status-message');
+        
+        // Show status message on page load
+        statusMessage.style.display = 'block';
+        
+        // Handle form submission
+        usernameForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent page reload
+            const formData = new FormData(e.target);
+
+            // Update status
+            statusMessage.textContent = 'Connecting to TikTok Live...';
+            statusMessage.className = 'status-connecting';
+            statusMessage.style.display = 'block';
+
+            try {
+                const response = await fetch('{{ url_for("main.display_dashboard") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const username = formData.get('username');
+                    statusMessage.textContent = `Connected to: ${username}`;
+                    statusMessage.className = 'status-connected';
+                } else {
+                    statusMessage.textContent = 'Error connecting to stream. Please check the username and try again.';
+                    statusMessage.className = 'status-error';
+                }
+            } catch (error) {
+                statusMessage.textContent = 'Connection error: ' + error.message;
+                statusMessage.className = 'status-error';
+            }
+        });
+
+        // Handle reset button
+        resetButton.addEventListener('click', async () => {
+            try {
+                statusMessage.textContent = 'Resetting dashboard...';
+                statusMessage.className = 'status-connecting';
+                
+                const response = await fetch('{{ url_for("main.reset_dashboard") }}', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    statusMessage.textContent = 'Error resetting dashboard. Please try again.';
+                    statusMessage.className = 'status-error';
+                }
+            } catch (error) {
+                statusMessage.textContent = 'Reset error: ' + error.message;
+                statusMessage.className = 'status-error';
+            }
+        });
+
+        // Auto-scroll comments to bottom when new ones are added
+        function scrollCommentsToBottom() {
+            const comments = document.getElementById('comments');
+            if (comments) {
+                comments.scrollTop = comments.scrollHeight;
+            }
+        }
+
+        // Poll for dashboard updates every 3 seconds with better error handling
+        async function updateDashboard() {
+            try {
+                // Add loading indicator
+                const mainContent = document.querySelector('.main-content');
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.className = 'loading-indicator';
+                loadingIndicator.innerHTML = '<div class="loading-spinner"></div>';
+                
+                const response = await fetch('{{ url_for("main.display_dashboard") }}');
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Update specific sections
+                    const newMvp = doc.querySelector('.mvp-sidebar');
+                    const newGiftersGrid = doc.querySelector('.gifters-grid');
+                    const newGiftsContainer = doc.querySelector('.gifts-container');
+                    const newCommentsContainer = doc.querySelector('.comments-container');
+
+                    if (newMvp) {
+                        document.querySelector('.mvp-sidebar').innerHTML = newMvp.innerHTML;
+                    }
+                    
+                    if (newGiftersGrid) {
+                        document.querySelector('.gifters-grid').innerHTML = newGiftersGrid.innerHTML;
+                    }
+                    
+                    if (newGiftsContainer) {
+                        document.querySelector('.gifts-container').innerHTML = newGiftsContainer.innerHTML;
+                    }
+                    
+                    if (newCommentsContainer) {
+                        document.querySelector('.comments-container').innerHTML = newCommentsContainer.innerHTML;
+                        scrollCommentsToBottom();
+                    }
+                }
+            } catch (error) {
+                console.error('Dashboard update error:', error);
+            } finally {
+                if (loadingIndicator.parentNode) {
+                    loadingIndicator.parentNode.removeChild(loadingIndicator);
+                }
+            }
+        }
+
+        // Initial scroll to bottom
+        scrollCommentsToBottom();
+
+        // Set up periodic updates
+        setInterval(updateDashboard, 3000);
+    </script>
+</body>
+</html>

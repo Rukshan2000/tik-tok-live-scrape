@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Live Dashboard</title>
+    <meta http-equiv="refresh" content="3">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #f0f0f0;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            grid-template-rows: auto;
+            grid-template-areas:
+                "header header"
+                "mvp main-content";
+            gap: 20px;
+            max-width: 1440px;
+        }
+
+        /* Background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        header {
+            grid-area: header;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ff3030;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+            font-weight: 800;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ff3030;
+        }
+
+        .section-title {
+            color: #ff3030;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            margin-left: 10px;
+            background: linear-gradient(to right, #ff3030, transparent);
+        }
+
+        /* Main content area with grid */
+        .main-content {
+            grid-area: main-content;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+        }
+
+        /* MVP styles - Now in sidebar */
+        .mvp-sidebar {
+            grid-area: mvp;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ff3030;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.2);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .mvp-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        .mvp-avatar-container {
+            position: relative;
+            margin-bottom: 20px;
+            width: 150px;
+            height: 150px;
+        }
+
+        .mvp-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #ff3030;
+            position: relative;
+            z-index: 2;
+        }
+
+        .mvp-avatar::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff3030, #ff9000, #ff3030);
+            z-index: -1;
+            animation: rotate-hue 3s linear infinite;
+        }
+
+        .mvp-label {
+            font-size: 1rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .mvp-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff3030;
+            margin-bottom: 5px;
+        }
+
+        .mvp-coins {
+            font-size: 1.4rem;
+            color: #f0f0f0;
+            font-weight: 600;
+        }
+
+        /* MVP Animation */
+        @keyframes pulse-mvp {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 48, 48, 0.7);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 30px 15px rgba(255, 48, 48, 0.5);
+                transform: scale(1.05);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 48, 48, 0);
+                transform: scale(1);
+            }
+        }
+
+        @keyframes rotate-hue {
+            0% {
+                filter: hue-rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                filter: hue-rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        .mvp-avatar-aura {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: transparent;
+            border: 3px solid transparent;
+            z-index: 1;
+        }
+
+        .aura-inner {
+            animation: pulse-mvp 2s infinite;
+        }
+
+        .aura-outer {
+            animation: pulse-mvp 2s infinite 1s;
+        }
+
+        /* Top gifters styles - Now in grid */
+        .gifters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background-color: #1f1f1f;
+            border-radius: 10px;
+            border-left: 5px solid #ff3030;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .gifter-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s ease;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #2a2a2a;
+        }
+
+        .gifter-card:hover {
+            transform: translateY(-5px);
+            background-color: #333;
+        }
+
+        .gifter-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #ff3030;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+        }
+
+        .gifter-name {
+            font-weight: 600;
+            margin-top: 10px;
+            text-align: center;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .gifter-coins {
+            color: #ff3030;
+            font-weight: bold;
+        }
+
+        /* Recent gifts and comments in grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .gifts-container, .comments-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .gift-card, .comment-card {
+            display: flex;
+            align-items: center;
+            background-color: #1f1f1f;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #ff3030;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .gift-card:hover, .comment-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(255, 0, 0, 0.2);
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 20px;
+            object-fit: cover;
+            border: 2px solid #ff3030;
+        }
+
+        .gift-content, .comment-content {
+            flex: 1;
+        }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #ff3030;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        .gift-text {
+            color: #ddd;
+        }
+
+        /* Animation classes based on gift value */
+        .animation-1000 {
+            animation: pulse 1.5s infinite;
+        }
+
+        .animation-2000 {
+            animation: pulse-gold 1.5s infinite;
+            border-color: gold !important;
+        }
+
+        .animation-5000 {
+            animation: pulse-diamond 1.5s infinite;
+            border-color: deepskyblue !important;
+        }
+
+        .animation-10000 {
+            animation: pulse-legendary 1.5s infinite;
+            border-color: magenta !important;
+        }
+
+        .animation-20000 {
+            animation: pulse-godlike 1.5s infinite;
+            border-color: yellow !important;
+            border-width: 3px !important;
+        }
+
+        /* Gift animations */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 48, 48, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 48, 48, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 48, 48, 0); }
+        }
+
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+
+        @keyframes pulse-diamond {
+            0% { box-shadow: 0 0 0 0 rgba(0, 191, 255, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(0, 191, 255, 0.5); }
+            100% { box-shadow: 0 0 0 30px rgba(0, 191, 255, 0); }
+        }
+
+        @keyframes pulse-legendary {
+            0% { 
+                box-shadow: 0 0 10px 0 rgba(255, 0, 255, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px 10px rgba(255, 0, 255, 0.5);
+                transform: scale(1.05);
+            }
+            100% { 
+                box-shadow: 0 0 30px 20px rgba(255, 0, 255, 0);
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse-godlike {
+            0% { 
+                box-shadow: 0 0 10px 0 rgba(255, 255, 0, 0.7),
+                           0 0 20px 0 rgba(255, 0, 0, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 30px 15px rgba(255, 255, 0, 0.5),
+                           0 0 40px 20px rgba(255, 0, 0, 0.5);
+                transform: scale(1.1);
+            }
+            100% { 
+                box-shadow: 0 0 50px 30px rgba(255, 255, 0, 0),
+                           0 0 60px 40px rgba(255, 0, 0, 0);
+                transform: scale(1);
+            }
+        }
+
+        /* Media queries for responsiveness */
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "mvp"
+                    "main-content";
+            }
+            
+            .mvp-sidebar {
+                position: static;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .mvp-avatar {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .mvp-avatar-container {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .mvp-avatar-aura {
+                width: 150px;
+                height: 150px;
+                top: -15px;
+                left: -15px;
+            }
+            
+            .gifters-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                padding: 15px;
+            }
+            
+            .gift-card, .comment-card {
+                padding: 10px;
+            }
+            
+            .user-avatar {
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Live Dashboard for @{{ username }}</h1>
+        <div class="dashboard-controls">
+            <form class="username-form" method="POST" action="{{ url_for('main.display_dashboard') }}">
+                <input type="text" name="username" placeholder="Enter TikTok username (e.g., @username)" value="{{ username if username != 'Not set' else '' }}">
+                <button type="submit">Set Username</button>
+            </form>
+            <form method="POST" action="{{ url_for('main.reset_dashboard') }}">
+                <button type="submit" class="reset-button">Reset Dashboard</button>
+            </form>
+        </div>
+    </header>
+
+    {% if mvp %}
+    <div class="mvp-sidebar">
+        <div class="section-title">Current MVP</div>
+        <div class="mvp-container">
+            <div class="mvp-avatar-container">
+                <div class="mvp-avatar-aura aura-outer"></div>
+                <div class="mvp-avatar-aura aura-inner"></div>
+                <img class="mvp-avatar {{ mvp.animation_class }}" src="{{ mvp.avatar }}" alt="{{ mvp.name }}">
+            </div>
+            <div class="mvp-info">
+                <div class="mvp-name">{{ mvp.name }}</div>
+                <div class="mvp-coins">{{ mvp.coins }} coins</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="main-content">
+        <div>
+            <div class="section-title">Top Gifters</div>
+            <div class="gifters-grid">
+                {% for gifter in top_gifters %}
+                <div class="gifter-card">
+                    <img class="gifter-avatar {{ gifter.animation_class }}" src="{{ gifter.avatar }}" alt="{{ gifter.name }}">
+                    <div class="gifter-name">{{ gifter.name }}</div>
+                    <div class="gifter-coins">{{ gifter.coins }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div>
+                <div class="section-title">Recent Gifts</div>
+                <div class="gifts-container">
+                    {% for gift in recent_gifts %}
+                    <div class="gift-card">
+                        <img class="user-avatar {{ gift.animation_class }}" src="{{ gift.avatar }}" alt="{{ gift.user }}">
+                        <div class="gift-content">
+                            <div class="user-header">
+                                <span class="user-name">{{ gift.user }}</span>
+                                <span class="timestamp">{{ gift.time }}</span>
+                            </div>
+                            <div class="gift-text">Sent {{ gift.count }}x "{{ gift.name }}" ({{ gift.coins }} coins)</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">Live Comments</div>
+                <div id="comments" class="comments-container">
+                    {% for comment in comments %}
+                    <div class="comment-card">
+                        <img class="user-avatar" src="{{ comment.avatar }}" alt="{{ comment.user }}">
+                        <div class="comment-content">
+                            <div class="user-header">
+                                <span class="user-name">{{ comment.user }}</span>
+                                <span class="timestamp">{{ comment.time }}</span>
+                            </div>
+                            <div class="gift-text">{{ comment.text }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
